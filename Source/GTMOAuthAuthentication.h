@@ -172,6 +172,8 @@ _EXTERN NSString* const kGTMOAuthSignatureMethodRSA_SHA1  _INITIALIZE_AS(@"RSA-S
 // authorization entry point for GTL library
 - (BOOL)authorizeRequest:(NSMutableURLRequest *)request;
 
+- (NSString*)authorizationHeaderForRequest:(NSMutableURLRequest *)request;
+
 // add OAuth headers
 //
 // any non-OAuth parameters (such as scope) will be included in the signature

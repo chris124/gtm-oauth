@@ -652,6 +652,54 @@ static NSString *const kUserEmailIsVerifiedKey    = @"isVerified";
   }
 }
 
+- (NSString*)authorizationHeaderForRequest:(NSMutableURLRequest *)request
+{
+    NSString *token = [self token];
+    if ([token length] == 0) {
+        return NO;
+    } else {
+        NSArray *keys = [[self class] tokenResourceKeys];
+        
+        // make all the parameters, including a signature for all
+        NSMutableArray *params = [self paramsForKeys:keys request:request];
+        
+        // split the params into "oauth_" params which go into the Auth header
+        // and others which get added to the query
+        NSMutableArray *oauthParams = [NSMutableArray array];
+        NSMutableArray *extendedParams = [NSMutableArray array];
+        
+        for (OAuthParameter *param in params) {
+            NSString *name = [param name];
+            BOOL hasPrefix = [name hasPrefix:@"oauth_"];
+            if (hasPrefix) {
+                [oauthParams addObject:param];
+            } else {
+                [extendedParams addObject:param];
+            }
+        }
+        
+        NSString *paramStr = [[self class] paramStringForParams:oauthParams
+                                                         joiner:@", "
+                                                    shouldQuote:YES
+                                                     shouldSort:NO];
+        
+        // include the realm string, if any, in the auth header
+        // http://oauth.net/core/1.0a/#auth_header
+        NSString *realmParam = @"";
+        NSString *realm = [self realm];
+        if ([realm length] > 0) {
+            NSString *encodedVal = [[self class] encodedOAuthParameterForString:realm];
+            realmParam = [NSString stringWithFormat:@"realm=\"%@\", ", encodedVal];
+        }
+        
+        // set the parameters for "oauth_" keys and the realm
+        // in the authorization header
+        NSString *authHdr = [NSString stringWithFormat:@"OAuth %@%@",
+                             realmParam, paramStr];
+        return authHdr;
+    }
+}
+
 - (BOOL)canAuthorize {
   // this method's is just a higher-level version of hasAccessToken
   return [self hasAccessToken];
