@@ -656,7 +656,7 @@ static NSString *const kUserEmailIsVerifiedKey    = @"isVerified";
 {
     NSString *token = [self token];
     if ([token length] == 0) {
-        return NO;
+        return nil;
     } else {
         NSArray *keys = [[self class] tokenResourceKeys];
         
