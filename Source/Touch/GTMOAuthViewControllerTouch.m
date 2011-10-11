@@ -20,8 +20,6 @@
 #import <Foundation/Foundation.h>
 #import <Security/Security.h>
 
-#if !GTL_REQUIRE_SERVICE_INCLUDES || GTL_INCLUDE_OAUTH
-
 #if TARGET_OS_IPHONE
 
 // If you want to shave a few bytes, and you include GTMOAuthViewTouch.xib
@@ -99,6 +97,7 @@ finishedWithAuth:(GTMOAuthAuthentication *)auth
 @synthesize userData = userData_;
 @synthesize webView = webView_;
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 - (id)initWithScope:(NSString *)scope
            language:(NSString *)language
      appServiceName:(NSString *)keychainAppServiceName
@@ -137,6 +136,7 @@ finishedWithAuth:(GTMOAuthAuthentication *)auth
   return self;
 }
 #endif
+#endif // !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 
 - (id)initWithScope:(NSString *)scope
            language:(NSString *)language
@@ -160,19 +160,23 @@ finishedWithAuth:(GTMOAuthAuthentication *)auth
 
       // use the supplied auth and OAuth endpoint URLs
       signIn_ = [[GTMOAuthSignIn alloc] initWithAuthentication:auth
-                                                 requestTokenURL:requestURL
-                                               authorizeTokenURL:authorizeURL
-                                                  accessTokenURL:accessURL
-                                                        delegate:self
-                                              webRequestSelector:@selector(signIn:displayRequest:)
-                                                finishedSelector:@selector(signIn:finishedWithAuth:error:)];
+                                               requestTokenURL:requestURL
+                                             authorizeTokenURL:authorizeURL
+                                                accessTokenURL:accessURL
+                                                      delegate:self
+                                            webRequestSelector:@selector(signIn:displayRequest:)
+                                              finishedSelector:@selector(signIn:finishedWithAuth:error:)];
     } else {
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
       // use default Google auth and endpoint values
       signIn_ = [[GTMOAuthSignIn alloc] initWithGoogleAuthenticationForScope:scope
-                                                                      language:language
-                                                                      delegate:self
-                                                            webRequestSelector:@selector(signIn:displayRequest:)
-                                                              finishedSelector:@selector(signIn:finishedWithAuth:error:)];
+                                                                    language:language
+                                                                    delegate:self
+                                                          webRequestSelector:@selector(signIn:displayRequest:)
+                                                            finishedSelector:@selector(signIn:finishedWithAuth:error:)];
+#else
+      NSAssert(0, @"auth object required");
+#endif
     }
 
     // the display name defaults to the bundle's name
@@ -186,6 +190,7 @@ finishedWithAuth:(GTMOAuthAuthentication *)auth
     }
     [self setDisplayName:displayName];
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
     // if the user is signing in to a Google service, we'll delete the
     // Google authentication browser cookies upon completion
     //
@@ -196,6 +201,7 @@ finishedWithAuth:(GTMOAuthAuthentication *)auth
       NSURL *cookiesURL = [NSURL URLWithString:@"https://www.google.com/accounts"];
       [self setBrowserCookiesURL:cookiesURL];
     }
+#endif
 
     [self setKeychainApplicationServiceName:keychainAppServiceName];
   }
@@ -253,12 +259,14 @@ finishedWithAuth:(GTMOAuthAuthentication *)auth
   return @"GTMOAuthViewTouch";
 }
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 + (GTMOAuthAuthentication *)authForGoogleFromKeychainForName:(NSString *)appServiceName {
   GTMOAuthAuthentication *newAuth = [GTMOAuthAuthentication authForInstalledApp];
   [self authorizeFromKeychainForName:appServiceName
                       authentication:newAuth];
   return newAuth;
 }
+#endif
 
 + (BOOL)authorizeFromKeychainForName:(NSString *)appServiceName
                       authentication:(GTMOAuthAuthentication *)newAuth {
@@ -446,9 +454,11 @@ finishedWithAuth:(GTMOAuthAuthentication *)auth
 
 #pragma mark Token Revocation
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 + (void)revokeTokenForGoogleAuthentication:(GTMOAuthAuthentication *)auth {
   [GTMOAuthSignIn revokeTokenForGoogleAuthentication:auth];
 }
+#endif
 
 #pragma mark Browser Cookies
 
@@ -874,5 +884,3 @@ finishedWithAuth:(GTMOAuthAuthentication *)auth
 @end
 
 #endif // TARGET_OS_IPHONE
-
-#endif // !GTL_REQUIRE_SERVICE_INCLUDES || GTL_INCLUDE_OAUTH

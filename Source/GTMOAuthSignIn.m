@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-#if !GTL_REQUIRE_SERVICE_INCLUDES || GTL_INCLUDE_OAUTH
-
 #define GTMOAUTHSIGNIN_DEFINE_GLOBALS 1
 #import "GTMOAuthSignIn.h"
 
@@ -31,14 +29,18 @@ static const NSTimeInterval kDefaultNetworkLossTimeoutInterval = 30.0;
 - (void)invokeFinalCallbackWithError:(NSError *)error;
 
 - (void)startWebRequest;
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 - (void)fetchGoogleUserInfo;
+#endif
 
 - (GTMHTTPFetcher *)pendingFetcher;
 - (void)setPendingFetcher:(GTMHTTPFetcher *)obj fetchType:(NSString *)fetchType;
 
 - (void)accessFetcher:(GTMHTTPFetcher *)fetcher finishedWithData:(NSData *)data error:(NSError *)error;
 - (void)requestFetcher:(GTMHTTPFetcher *)fetcher finishedWithData:(NSData *)data error:(NSError *)error;
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 - (void)infoFetcher:(GTMHTTPFetcher *)fetcher finishedWithData:(NSData *)data error:(NSError *)error;
+#endif
 
 - (void)closeTheWindow;
 
@@ -58,9 +60,12 @@ static const NSTimeInterval kDefaultNetworkLossTimeoutInterval = 30.0;
             requestTokenURL = requestURL_,
             authorizeTokenURL = authorizeURL_,
             accessTokenURL = accessURL_,
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
             shouldFetchGoogleUserInfo = shouldFetchGoogleUserInfo_,
+#endif
             networkLossTimeoutInterval = networkLossTimeoutInterval_;
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 - (id)initWithGoogleAuthenticationForScope:(NSString *)scope
                                   language:(NSString *)language
                                   delegate:(id)delegate
@@ -96,6 +101,7 @@ static const NSTimeInterval kDefaultNetworkLossTimeoutInterval = 30.0;
                    webRequestSelector:webRequestSelector
                      finishedSelector:finishedSelector];
 }
+#endif
 
 - (id)initWithAuthentication:(GTMOAuthAuthentication *)auth
              requestTokenURL:(NSURL *)requestURL
@@ -124,10 +130,12 @@ static const NSTimeInterval kDefaultNetworkLossTimeoutInterval = 30.0;
     webRequestSelector_ = webRequestSelector;
     finishedSelector_ = finishedSelector;
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
     // for Google authentication, we want to automatically fetch user info
     if ([[authorizeURL host] isEqual:@"www.google.com"]) {
       shouldFetchGoogleUserInfo_ = YES;
     }
+#endif
 
     // default timeout for a lost internet connection while the server
     // UI is displayed is 30 seconds
@@ -190,15 +198,17 @@ static const NSTimeInterval kDefaultNetworkLossTimeoutInterval = 30.0;
   // token
   [auth_ reset];
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
   // add the Google-specific scope for obtaining the authenticated user info
   if (shouldFetchGoogleUserInfo_) {
-    NSString *uiScope = @"https://www.googleapis.com/auth/userinfo#email";
+    NSString *uiScope = @"https://www.googleapis.com/auth/userinfo.email";
     NSString *scope = [auth_ scope];
     if ([scope rangeOfString:uiScope].location == NSNotFound) {
       scope = [scope stringByAppendingFormat:@" %@", uiScope];
       [auth_ setScope:scope];
     }
   }
+#endif
 
   // start fetching a request token
   NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:requestURL_];
@@ -330,6 +340,7 @@ static const NSTimeInterval kDefaultNetworkLossTimeoutInterval = 30.0;
     [auth_ setKeysForResponseData:data];
     [auth_ setHasAccessToken:YES];
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
     if (shouldFetchGoogleUserInfo_
         && [[auth_ serviceProvider] isEqual:kGTMOAuthServiceProviderGoogle]) {
       // fetch the user's information from the Google server
@@ -338,9 +349,13 @@ static const NSTimeInterval kDefaultNetworkLossTimeoutInterval = 30.0;
       // we're not authorizing with Google, so we're done
       [self invokeFinalCallbackWithError:nil];
     }
+#else
+    [self invokeFinalCallbackWithError:nil];
+#endif
   }
 }
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 - (void)fetchGoogleUserInfo {
   // fetch the additional user info
   NSString *infoURLStr = @"https://www.googleapis.com/userinfo/email";
@@ -372,6 +387,7 @@ static const NSTimeInterval kDefaultNetworkLossTimeoutInterval = 30.0;
     [self invokeFinalCallbackWithError:nil];
   }
 }
+#endif
 
 // convenience method for making the final call to our delegate
 - (void)invokeFinalCallbackWithError:(NSError *)error {
@@ -515,6 +531,7 @@ static void ReachabilityCallBack(SCNetworkReachabilityRef target,
 
 #pragma mark Token Revocation
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 + (void)revokeTokenForGoogleAuthentication:(GTMOAuthAuthentication *)auth {
   // we can revoke Google tokens with the old AuthSub API,
   // http://code.google.com/apis/accounts/docs/AuthSub.html
@@ -537,6 +554,7 @@ static void ReachabilityCallBack(SCNetworkReachabilityRef target,
                                   delegate:nil];
   }
 }
+#endif
 
 #pragma mark Accessors
 
@@ -574,5 +592,3 @@ static void ReachabilityCallBack(SCNetworkReachabilityRef target,
 }
 
 @end
-
-#endif // #if !GTL_REQUIRE_SERVICE_INCLUDES || GTL_INCLUDE_OAUTH

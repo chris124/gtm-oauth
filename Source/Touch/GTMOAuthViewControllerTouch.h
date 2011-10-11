@@ -61,8 +61,6 @@
 // html is displayed, the view will be dismissed and the callback method
 // will be invoked with an error.
 
-#if !GTL_REQUIRE_SERVICE_INCLUDES || GTL_INCLUDE_OAUTH
-
 #import <Foundation/Foundation.h>
 
 #if TARGET_OS_IPHONE
@@ -182,6 +180,7 @@ _EXTERN NSString* const kGTLOAuthKeychainErrorDomain       _INITIALIZE_AS(@"com.
 
 @property (nonatomic, retain) id userData;
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 // init method for authenticating to Google services
 //
 // scope is the requested scope of authorization
@@ -210,6 +209,7 @@ _EXTERN NSString* const kGTLOAuthKeychainErrorDomain       _INITIALIZE_AS(@"com.
      appServiceName:(NSString *)keychainAppServiceName
   completionHandler:(void (^)(GTMOAuthViewControllerTouch *viewController, GTMOAuthAuthentication *auth, NSError *error))handler;
 #endif
+#endif // !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 
 // init method for authenticating to non-Google services, taking
 //   explicit endpoint URLs and an authentication object
@@ -249,17 +249,21 @@ _EXTERN NSString* const kGTLOAuthKeychainErrorDomain       _INITIALIZE_AS(@"com.
 
 - (void)cancelSigningIn;
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 // revocation of an authorized token from Google
 + (void)revokeTokenForGoogleAuthentication:(GTMOAuthAuthentication *)auth;
+#endif
 
 //
 // Keychain
 //
 
+#if !GTM_OAUTH_SKIP_GOOGLE_SUPPORT
 // Create an authentication object for Google services from the access
 // token and secret stored in the keychain; if no token is available, return
 // an unauthorized auth object
 + (GTMOAuthAuthentication *)authForGoogleFromKeychainForName:(NSString *)appServiceName;
+#endif
 
 // Add tokens from the keychain, if available, to an authentication
 // object.  The authentication object must have previously been created.
@@ -316,5 +320,3 @@ enum {
 @end
 
 #endif // TARGET_OS_IPHONE
-
-#endif // !GTL_REQUIRE_SERVICE_INCLUDES || GTL_INCLUDE_OAUTH
