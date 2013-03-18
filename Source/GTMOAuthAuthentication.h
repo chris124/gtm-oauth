@@ -17,7 +17,7 @@
 // requests. http://oauth.net/core/1.0a/
 //
 // Users can rely on +authForInstalledApp for creating a complete authentication
-// object for use with Google's OAuth protocol.
+// object.
 //
 // The user (typically the GTMOAuthSignIn object) can call the methods
 //  - (void)setKeysForResponseData:(NSData *)data;
@@ -46,8 +46,6 @@
 #define _INITIALIZE_AS(x)
 #endif
 
-_EXTERN NSString* const kGTMOAuthServiceProviderGoogle _INITIALIZE_AS(@"Google");
-
 _EXTERN NSString* const kGTMOAuthSignatureMethodHMAC_SHA1 _INITIALIZE_AS(@"HMAC-SHA1");
 
 //
@@ -63,6 +61,12 @@ _EXTERN NSString* const kGTMOAuthFetchTypeKey      _INITIALIZE_AS(@"FetchType");
 _EXTERN NSString* const kGTMOAuthFetchTypeRequest  _INITIALIZE_AS(@"request");
 _EXTERN NSString* const kGTMOAuthFetchTypeAccess   _INITIALIZE_AS(@"access");
 _EXTERN NSString* const kGTMOAuthFetchTypeUserInfo _INITIALIZE_AS(@"userInfo");
+
+// Notification that sign-in has completed, and token fetches will begin (useful
+// for hiding pre-sign in messages, and showing post-sign in messages
+// during the access fetch)
+_EXTERN NSString* const kGTMOAuthUserWillSignIn      _INITIALIZE_AS(@"kGTMOAuthUserWillSignIn");
+_EXTERN NSString* const kGTMOAuthUserHasSignedIn     _INITIALIZE_AS(@"kGTMOAuthUserHasSignedIn");
 
 // notification for network loss during html sign-in display
 _EXTERN NSString* const kGTMOAuthNetworkLost       _INITIALIZE_AS(@"kGTMOAuthNetworkLost");
@@ -122,7 +126,7 @@ _EXTERN NSString* const kGTMOAuthSignatureMethodRSA_SHA1  _INITIALIZE_AS(@"RSA-S
 @property (nonatomic, copy) NSString *realm;
 @property (nonatomic, copy) NSString *privateKey;
 
-// service identifier, like "Google"; not used for authentication or signing
+// service identifier, like "Twitter"; not used for authentication or signing
 @property (nonatomic, copy) NSString *serviceProvider;
 
 // user email and verified status; not used for authentication or signing
